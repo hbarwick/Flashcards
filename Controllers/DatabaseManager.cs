@@ -1,6 +1,7 @@
 ﻿using System.Data.SqlClient;
 using System.Configuration;
 using Flashcards.Models;
+using Dapper;
 
 namespace Flashcards.Controllers
 {
@@ -66,13 +67,13 @@ namespace Flashcards.Controllers
             tableCommand.CommandText =
                 $@"USE Flashcards;
                            CREATE TABLE Stacks(
-                           Id INT IDENTITY(1,1) PRIMARY KEY
+                           Id INT IDENTITY(1,1) PRIMARY KEY,
                            StackName VARCHAR(50) UNIQUE);
                             
                            CREATE TABLE Cards(
                            Id INT  IDENTITY(1,1) PRIMARY KEY,
                            StackId INT,
-                           Stack VARCHAR(50) FOREIGN KEY REFERENCES Stacks(StackName),
+                           StackName VARCHAR(50) FOREIGN KEY REFERENCES Stacks(StackName),
                            FrontText VARCHAR(150),
                            BackText VARCHAR(150));
                             
@@ -101,7 +102,7 @@ namespace Flashcards.Controllers
             using var connection = new SqlConnection(connectionString);
             using var tableCommand = connection.CreateCommand();
             connection.Open();
-            tableCommand.CommandText = "INSERT INTO Cards (StackId, Stack, FrontText, BackText)" +
+            tableCommand.CommandText = "INSERT INTO Cards (StackId, StackName, FrontText, BackText)" +
                                        "VALUES (@StackId, @stackName, @FrontText, @BackText)";
             tableCommand.Parameters.AddWithValue("@StackId", stack.StackSize + 1);
             tableCommand.Parameters.AddWithValue("stackName", stack.StackName);
@@ -110,21 +111,68 @@ namespace Flashcards.Controllers
             tableCommand.ExecuteNonQuery();
         }
 
-        public CardStack QueryStack(string StackName)
+        /// <summary>
+        /// Returns a CardStack object, with name from the Stack table of the database
+        /// Stacksize comes from the number of cards with that Stack name
+        /// </summary>
+        /// <param name="stackName">String name of stack</param>
+        /// <returns>CardStack object</returns>
+        public CardStack QueryStack(string stackName)
         {
             CardStack newStack = new();
             int stackSize = 0;
             using var connection = new SqlConnection(connectionString);
             using var tableCommand = connection.CreateCommand();
             connection.Open();
-            tableCommand.CommandText = "SELECT COUNT(*) FROM Cards WHERE Stack = @StackName";
-            tableCommand.Parameters.AddWithValue("@StackName", StackName);
+            tableCommand.CommandText = "SELECT COUNT(*) FROM Cards WHERE StackName = @StackName";
+            tableCommand.Parameters.AddWithValue("@StackName", stackName);
             stackSize = (Int32)tableCommand.ExecuteScalar();
 
-            newStack.StackName = StackName;
+            newStack.StackName = stackName;
             newStack.StackSize = stackSize;
 
             return newStack;
+        }
+
+        /// <summary>
+        /// To reorder the StackId of cards in given stackName, removing any gaps in Id.
+        /// Filters down list of cards to those assigned to given stackName,
+        /// Loops through list updating database with new StackId
+        /// </summary>
+        /// <param name="stackName">Name of the stack to reindex</param>
+        public void ReIndexCards(string stackName)
+        {
+            var cards = GetCardList();
+            var stackCards = from card in cards
+                             where card.StackName == stackName
+                             select card;
+
+            int index = 1;
+            using var connection = new SqlConnection(connectionString);
+            using var tableCommand = connection.CreateCommand();
+            connection.Open();
+            foreach (Card card in stackCards)
+            {
+                tableCommand.CommandText = "UPDATE CARDS SET StackId = @StackId WHERE Id = @Id";
+                tableCommand.Parameters.AddWithValue("@StackId", index++);
+                tableCommand.Parameters.AddWithValue("@Id", card.Id);
+                tableCommand.ExecuteNonQuery();
+                tableCommand.Parameters.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Uses dappers Query method to return a list of Card from the Cards table.
+        /// </summary>
+        /// <returns>List of Card</returns>
+        public List<Card> GetCardList()
+        {
+            List<Card> cards = new List<Card>();
+            using var connection = new SqlConnection(connectionString);
+
+            cards = connection.Query<Card>("SELECT * FROM Cards").ToList();
+
+            return cards;
         }
 
     }

@@ -12,17 +12,34 @@ db.CheckTables();
 
 //Console.WriteLine($"Checkdatabase result {result}");
 
-// db.CreateStack("SQL Queries");
+//db.CreateStack("A");
+//db.CreateStack("B");
 
-// CardStack st = db.QueryStack("SQL Queries");
+//db.CreateCard("A", "Dog", "Bone");
+//db.CreateCard("A", "Cat", "Mouse");
+//db.CreateCard("A", "Chip", "Potato");
+//db.CreateCard("B", "DD", "22");
+//db.CreateCard("B", "FF", "44");
+//db.CreateCard("B", "GG", "65");
 
-db.CreateCard("SQL Queries", "Hello", "World");
-db.CreateCard("SQL Queries", "Hal", "Katy");
-db.CreateCard("SQL Queries", "This", "That");
+List<Card> cards = new List<Card>();
 
+cards = db.GetCardList();
 
-// linq
-//var lowNums = from num in nums
-//              where num < 4
-//              select num;
+//foreach (var card in cards)
+//{
+//    Console.WriteLine(card.FrontText);
+//    Console.WriteLine(card.BackText);
+//    Console.WriteLine(card.StackName);
+//}
 
+var sqlcards = from card in cards
+               where card.StackName == "A"
+               select card;
+
+foreach (var card in sqlcards)
+{
+    Console.WriteLine(card.FrontText);
+}
+
+db.ReIndexCards("B");
