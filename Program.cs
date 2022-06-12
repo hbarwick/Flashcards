@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using Flashcards.Controllers;
+using Flashcards.Models;
 
 Console.WriteLine("Hello, World!");
 
@@ -11,8 +12,13 @@ db.CheckTables();
 
 //Console.WriteLine($"Checkdatabase result {result}");
 
-db.CreateStack("SQL Queries");
+// db.CreateStack("SQL Queries");
 
+// CardStack st = db.QueryStack("SQL Queries");
+
+db.CreateCard("SQL Queries", "Hello", "World");
+db.CreateCard("SQL Queries", "Hal", "Katy");
+db.CreateCard("SQL Queries", "This", "That");
 
 
 // linq

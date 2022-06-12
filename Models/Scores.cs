@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace Flashcards.Models
 {
-    internal class Card
+    internal class Scores
     {
         public int Id { get; set; }
         public string? StackName { get; set; }
-        public string? FrontText { get; set; }
-        public string? BackText { get; set; }
+        public DateTime Date { get; set; }
+        public int Score { get; set; }
     }
 }
