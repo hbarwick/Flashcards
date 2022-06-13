@@ -73,13 +73,13 @@ namespace Flashcards.Controllers
                            CREATE TABLE Cards(
                            Id INT  IDENTITY(1,1) PRIMARY KEY,
                            StackId INT,
-                           StackName VARCHAR(50) FOREIGN KEY REFERENCES Stacks(StackName),
+                           StackName VARCHAR(50) FOREIGN KEY REFERENCES Stacks(StackName) ON DELETE CASCADE,
                            FrontText VARCHAR(150),
                            BackText VARCHAR(150));
                             
                            CREATE TABLE Scores(
                            Id INT IDENTITY(1,1) PRIMARY KEY,
-                           Stack VARCHAR(50) FOREIGN KEY REFERENCES Stacks(StackName),
+                           Stack VARCHAR(50) FOREIGN KEY REFERENCES Stacks(StackName) ON DELETE CASCADE,
                            Date DATETIME,
                            Score INT);";
             tableCommand.ExecuteNonQuery();
@@ -161,6 +161,19 @@ namespace Flashcards.Controllers
             }
         }
 
+        public void ReIndexStacks()
+        {
+            using var connection = new SqlConnection(connectionString);
+            using var tableCommand = connection.CreateCommand();
+            tableCommand.CommandText = @"SELECT StackName INTO #TempTable FROM Stacks;
+                                         DELETE FROM stacks;
+                                         DBCC CHECKIDENT('Stacks', RESEED, 0);
+                                         INSERT INTO stacks SELECT StackName FROM #TempTable;
+                                         DROP TABLE #TempTable;";
+            tableCommand.ExecuteNonQuery();
+        }
+
+
         /// <summary>
         /// Uses dappers Query method to return a list of Card from the Cards table.
         /// </summary>
@@ -175,5 +188,29 @@ namespace Flashcards.Controllers
             return cards;
         }
 
+        /// <summary>
+        /// Uses dappers Query method to return a list of Stacks from the Stacks table.
+        /// </summary>
+        /// <returns>List of CardStack</returns>
+        public List<CardStack> GetStackList()
+        {
+            List<CardStack> stacks = new List<CardStack>();
+            using var connection = new SqlConnection(connectionString);
+
+            stacks = connection.Query<CardStack>("SELECT * FROM Stacks").ToList();
+
+            return stacks;
+        }
+
+        public void DeleteStack(string stackName)
+        {
+            using var connection = new SqlConnection(connectionString);
+            using var tableCommand = connection.CreateCommand();
+
+            tableCommand.CommandText = "DELETE FROM Stacks WHERE StackName = @stackName";
+            tableCommand.Parameters.AddWithValue("@stackName", stackName);
+            tableCommand.ExecuteNonQuery();
+            ReIndexStacks();
+        }
     }
 }

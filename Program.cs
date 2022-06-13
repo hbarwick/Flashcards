@@ -37,9 +37,7 @@ var sqlcards = from card in cards
                where card.StackName == "A"
                select card;
 
-foreach (var card in sqlcards)
-{
-    Console.WriteLine(card.FrontText);
-}
 
-db.ReIndexCards("B");
+UIManager ui = new(db);
+
+ui.MenuLoop();
