@@ -165,6 +165,7 @@ namespace Flashcards.Controllers
         {
             using var connection = new SqlConnection(connectionString);
             using var tableCommand = connection.CreateCommand();
+            connection.Open();
             tableCommand.CommandText = @"SELECT StackName INTO #TempTable FROM Stacks;
                                          DELETE FROM stacks;
                                          DBCC CHECKIDENT('Stacks', RESEED, 0);
@@ -197,18 +198,18 @@ namespace Flashcards.Controllers
             List<CardStack> stacks = new List<CardStack>();
             using var connection = new SqlConnection(connectionString);
 
-            stacks = connection.Query<CardStack>("SELECT * FROM Stacks").ToList();
+            stacks = connection.Query<CardStack>("SELECT * FROM Stacks ORDER BY Id").ToList();
 
             return stacks;
         }
 
-        public void DeleteStack(string stackName)
+        public void DeleteStack(int Id)
         {
             using var connection = new SqlConnection(connectionString);
             using var tableCommand = connection.CreateCommand();
-
-            tableCommand.CommandText = "DELETE FROM Stacks WHERE StackName = @stackName";
-            tableCommand.Parameters.AddWithValue("@stackName", stackName);
+            connection.Open();
+            tableCommand.CommandText = "DELETE FROM Stacks WHERE Id = @Id";
+            tableCommand.Parameters.AddWithValue("@Id", Id);
             tableCommand.ExecuteNonQuery();
             ReIndexStacks();
         }

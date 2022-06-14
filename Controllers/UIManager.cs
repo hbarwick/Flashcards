@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Flashcards.Models;
 
 namespace Flashcards.Controllers
 {
@@ -92,8 +93,21 @@ namespace Flashcards.Controllers
 
         private void DeleteStack()
         {
-            throw new NotImplementedException();
+            List<CardStack> stacks = db.GetStackList();
+            Report.DisplayAllRecords(stacks);
+            int input = GetUserInput(Helpers.GetArrayOfIds(stacks), DisplayStacks);
+            if (input != 0)
+            {
+                db.DeleteStack(input);
+            }
+
         }
+
+        private void DisplayStacks()
+        {
+            Console.Write("Enter ID of Stack to delete, Or 0 to go back: ");
+        }
+
 
         private void AddStack()
         {
@@ -122,9 +136,6 @@ namespace Flashcards.Controllers
                     Console.WriteLine(ex.Message);
                 }
             }
-
-
-
         }
 
         private void ManageStacks()
