@@ -13,7 +13,7 @@ namespace Flashcards.Controllers
         {
             var choices = from stack in stackList
                           select stack.Id.ToString();
-            choices.Append("0");
+            choices = choices.Append("0");
             return choices.ToArray();
         }
     }

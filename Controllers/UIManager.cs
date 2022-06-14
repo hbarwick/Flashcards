@@ -43,12 +43,23 @@ namespace Flashcards.Controllers
 
         private void ManageStacksMenu()
         {
-            Console.WriteLine("---------------------------");
+            Console.WriteLine("\n---------------------------");
             Console.WriteLine("       Manage Stacks       ");
             Console.WriteLine("---------------------------\n");
             Console.WriteLine("0 - Back to Main Menu");
             Console.WriteLine("1 - Add Stack");
             Console.WriteLine("2 - Delete Stack");
+            Console.Write("\nEnter option number: ");
+        }
+
+        private void ManageCardsMenu()
+        {
+            Console.WriteLine("\n---------------------------");
+            Console.WriteLine("        Manage Cards       ");
+            Console.WriteLine("---------------------------\n");
+            Console.WriteLine("0 - Back to Main Menu");
+            Console.WriteLine("1 - Add Card");
+            Console.WriteLine("2 - Delete Card");
             Console.Write("\nEnter option number: ");
         }
 
@@ -91,21 +102,75 @@ namespace Flashcards.Controllers
             }
         }
 
+        private void ManageCardsFunctionSelect(int intUserInput)
+        {
+            switch (intUserInput)
+            {
+                case 0:
+                    // Exit Program
+                    break;
+                case 1:
+                    AddCard();
+                    break;
+                case 2:
+                    DeleteCard();
+                    break;
+            }
+        }
+
+        private void DeleteCard()
+        {
+            throw new NotImplementedException();
+        }
+
+        private void AddCard()
+        {
+            throw new NotImplementedException();
+        }
+
         private void DeleteStack()
         {
             List<CardStack> stacks = db.GetStackList();
             Report.DisplayAllRecords(stacks);
-            int input = GetUserInput(Helpers.GetArrayOfIds(stacks), DisplayStacks);
-            if (input != 0)
+
+            var s = Helpers.GetArrayOfIds(stacks);
+            foreach (var p in s)
             {
-                db.DeleteStack(input);
+                Console.WriteLine(p);
             }
 
+
+            int input = GetUserInput(Helpers.GetArrayOfIds(stacks), DisplayStacks);
+
+            var stackname = stacks.Where(a => a.Id == input).ToList();
+            if (input != 0)
+            {
+                string message = $"\nAre you SURE you want to delete stack '{stackname.First().StackName}'?" +
+                    $"\nALL cards AND study scores for this stack will also be deleted - y/n: ";
+                string answer = GetYN(message);
+                if (answer == "y")
+                {
+                    db.DeleteStack(input);
+                    Console.WriteLine("\nStack Deleted.\n");
+                }
+            }
+        }
+
+        private string GetYN(string message)
+        {
+            string? userInput = string.Empty;
+            string[] choices = { "y", "n" };
+            while (!choices.Contains(userInput))
+            {
+                Console.Write(message);
+                userInput = Console.ReadLine().ToLower();
+            }
+            return userInput;
         }
 
         private void DisplayStacks()
         {
-            Console.Write("Enter ID of Stack to delete, Or 0 to go back: ");
+            Console.Write("\nEnter ID of Stack to delete, Or 0 to go back: ");
         }
 
 
@@ -147,7 +212,8 @@ namespace Flashcards.Controllers
 
         private void ManageCards()
         {
-            throw new NotImplementedException();
+            int input = GetUserInput(stackMenuChoices, ManageCardsMenu);
+            ManageCardsFunctionSelect(input);
         }
 
         private void Study()
