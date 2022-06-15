@@ -161,6 +161,8 @@ namespace Flashcards.Controllers
             }
         }
 
+
+        // TODO This method causes delete cascade to delete all cards
         public void ReIndexStacks()
         {
             using var connection = new SqlConnection(connectionString);
@@ -211,7 +213,8 @@ namespace Flashcards.Controllers
             tableCommand.CommandText = "DELETE FROM Stacks WHERE Id = @Id";
             tableCommand.Parameters.AddWithValue("@Id", Id);
             tableCommand.ExecuteNonQuery();
-            ReIndexStacks();
+            //ReIndexStacks(); 
+            //TODO Reimplement Reindex as it is causing delete cascade to delete all cards
         }
     }
 }

@@ -125,21 +125,39 @@ namespace Flashcards.Controllers
 
         private void AddCard()
         {
-            throw new NotImplementedException();
+            Console.WriteLine("\nSelect stack to add a card to.\n");
+            List<CardStack> stacks = db.GetStackList();
+            Report.DisplayAllRecords(stacks);
+            int input = GetUserInput(Helpers.GetArrayOfIds(stacks), DisplayStacks);
+            var stack = stacks.Where(a => a.Id == input).ToList();
+            var stackname = stack.First().StackName;
+            if (input == 0)
+            {
+                return;
+            }
+            string? frontText = GetString(150, "\nEnter front text of flashcard: ");
+            string? backText = GetString(150, "\nEnter back text of flashcard: ");
+
+            db.CreateCard(stackname, frontText, backText);
+
+        }
+        private string GetString(int length, string message)
+        {
+            Console.Write(message);
+            string? textEntry = Console.ReadLine();
+            while(textEntry.Length > length)
+            {
+                Console.Write($"\nMax length of {length} characters exceeded." +
+                    $"\nPlease enter shorter string: ");
+                textEntry = Console.ReadLine();
+            }
+            return textEntry;
         }
 
         private void DeleteStack()
         {
             List<CardStack> stacks = db.GetStackList();
             Report.DisplayAllRecords(stacks);
-
-            var s = Helpers.GetArrayOfIds(stacks);
-            foreach (var p in s)
-            {
-                Console.WriteLine(p);
-            }
-
-
             int input = GetUserInput(Helpers.GetArrayOfIds(stacks), DisplayStacks);
 
             var stackname = stacks.Where(a => a.Id == input).ToList();
@@ -170,19 +188,13 @@ namespace Flashcards.Controllers
 
         private void DisplayStacks()
         {
-            Console.Write("\nEnter ID of Stack to delete, Or 0 to go back: ");
+            Console.Write("\nEnter ID of Stack, Or 0 to go back: ");
         }
 
 
         private void AddStack()
         {
-            Console.Write("\nEnter name of the stack to add: ");
-            string? stackName = Console.ReadLine();
-            if (stackName.Length > 50)
-            {
-                Console.WriteLine("\nStack name cannot be longer than 50 characters, please enter shorter name.");
-                AddStack();
-            }
+            string? stackName = GetString(50, "\nEnter name of the stack to add: ");
             try
             {
                 db.CreateStack(stackName);
