@@ -2,6 +2,8 @@
 using System.Configuration;
 using Flashcards.Models;
 using Dapper;
+using Dapper.Contrib;
+using Dapper.Contrib.Extensions;
 
 namespace Flashcards.Controllers
 {
@@ -81,9 +83,10 @@ namespace Flashcards.Controllers
                             
                            CREATE TABLE Scores(
                            Id INT IDENTITY(1,1) PRIMARY KEY,
-                           Stack VARCHAR(50) FOREIGN KEY REFERENCES Stacks(StackName) ON DELETE CASCADE,
+                           StackName VARCHAR(50) FOREIGN KEY REFERENCES Stacks(StackName) ON DELETE CASCADE,
                            Date DATETIME,
-                           Score INT);";
+                           Score INT,
+                           StackSize INT);";
             tableCommand.ExecuteNonQuery();
         }
 
@@ -133,7 +136,6 @@ namespace Flashcards.Controllers
             tableCommand.ExecuteNonQuery();
         }
 
-
         /// <summary>
         /// To reorder the StackId of cards in given stackName, removing any gaps in Id.
         /// Filters down list of cards to those assigned to given stackName,
@@ -161,22 +163,6 @@ namespace Flashcards.Controllers
             }
         }
 
-
-        // TODO This method causes delete cascade to delete all cards
-        public void ReIndexStacks()
-        {
-            using var connection = new SqlConnection(connectionString);
-            using var tableCommand = connection.CreateCommand();
-            connection.Open();
-            tableCommand.CommandText = @"SELECT StackName INTO #TempTable FROM Stacks;
-                                         DELETE FROM stacks;
-                                         DBCC CHECKIDENT('Stacks', RESEED, 0);
-                                         INSERT INTO stacks SELECT StackName FROM #TempTable;
-                                         DROP TABLE #TempTable;";
-            tableCommand.ExecuteNonQuery();
-        }
-
-
         /// <summary>
         /// Uses dappers Query method to return a list of Card from the Cards table.
         /// </summary>
@@ -185,9 +171,7 @@ namespace Flashcards.Controllers
         {
             List<Card> cards = new List<Card>();
             using var connection = new SqlConnection(connectionString);
-
             cards = connection.Query<Card>("SELECT * FROM Cards").ToList();
-
             return cards;
         }
 
@@ -199,9 +183,9 @@ namespace Flashcards.Controllers
         {
             List<CardStack> stacks = new List<CardStack>();
             using var connection = new SqlConnection(connectionString);
-
             stacks = connection.Query<CardStack>("SELECT * FROM Stacks ORDER BY Id").ToList();
 
+            // Adds the TempId value to each Stack for purposes of display/selection
             for (var i = 0; i < stacks.Count; i++)
             {
                 stacks[i].TempId = i + 1;
@@ -218,8 +202,26 @@ namespace Flashcards.Controllers
             tableCommand.CommandText = "DELETE FROM Stacks WHERE StackName = @stackName";
             tableCommand.Parameters.AddWithValue("@StackName", stackName);
             tableCommand.ExecuteNonQuery();
-            //ReIndexStacks(); 
-            //TODO Reimplement Reindex as it is causing delete cascade to delete all cards
+        }
+
+        public void DeleteCard(int Id)
+        {
+            using var connection = new SqlConnection(connectionString);
+            using var tableCommand = connection.CreateCommand();
+            connection.Open();
+            tableCommand.CommandText = "DELETE FROM Cards WHERE Id = @Id";
+            tableCommand.Parameters.AddWithValue("@Id", Id);
+            tableCommand.ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// Uses Dapper Contrib to write the scores DTO direct to the scores table
+        /// </summary>
+        /// <param name="scoreCard">Populates Scores object</param>
+        internal void WriteScore(Scores scoreCard)
+        {
+            using var connection = new SqlConnection(connectionString);
+            connection.Insert(scoreCard);
         }
     }
 }

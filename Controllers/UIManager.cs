@@ -26,7 +26,7 @@ namespace Flashcards.Controllers
         }
 
         private string[] menuChoices = { "0", "1", "2", "3", "4" };
-        private string[] stackMenuChoices = { "0", "1", "2" };
+        private string[] stackMenuChoices = { "0", "1", "2", "3" };
 
         private void MainMenu()
         {
@@ -49,6 +49,7 @@ namespace Flashcards.Controllers
             Console.WriteLine("0 - Back to Main Menu");
             Console.WriteLine("1 - Add Stack");
             Console.WriteLine("2 - Delete Stack");
+            Console.WriteLine("3 - View Stacks");
             Console.Write("\nEnter option number: ");
         }
 
@@ -60,6 +61,7 @@ namespace Flashcards.Controllers
             Console.WriteLine("0 - Back to Main Menu");
             Console.WriteLine("1 - Add Card");
             Console.WriteLine("2 - Delete Card");
+            Console.WriteLine("3 - View All Cards");
             Console.Write("\nEnter option number: ");
         }
 
@@ -99,6 +101,10 @@ namespace Flashcards.Controllers
                 case 2:
                     DeleteStack();
                     break;
+                case 3:
+                    List<CardStack> stacks = db.GetStackList();
+                    Report.DisplayAllStacks(stacks);
+                    break;
             }
         }
 
@@ -115,31 +121,62 @@ namespace Flashcards.Controllers
                 case 2:
                     DeleteCard();
                     break;
+                case 3:
+                    var cards = db.GetCardList();
+                    Report.DisplayAllCards(cards);
+                    break;
             }
         }
 
         private void DeleteCard()
         {
-            throw new NotImplementedException();
+            Console.WriteLine("\nSelect stack to delete card from... ");
+            var stackname = DisplayAndChooseStack();
+            List<Card> allCards = db.GetCardList();
+            var cards = allCards.Where(a => a.StackName == stackname).ToList();
+            var card = DisplayAndChooseCard(cards);
+            db.DeleteCard(card);
+            db.ReIndexCards(stackname);
         }
+
+        private int DisplayAndChooseCard(List<Card> cards)
+        {
+            Report.DisplayCards(cards);
+            var ids = cards.Select(a => a.StackId.ToString()).ToList();
+            ids.Add("0");
+            var idarray = ids.ToArray();
+            int input = GetUserInput(idarray, DisplayCards);
+            var card = cards.Where(a => a.StackId == input).ToList();
+
+            try
+            {
+                var cardId = card.First().Id;
+                return cardId;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
 
         private void AddCard()
         {
             Console.WriteLine("\nSelect stack to add a card to.\n");
             List<CardStack> stacks = db.GetStackList();
-            Report.DisplayAllRecords(stacks);
+            Report.DisplayAllStacks(stacks);
             int input = GetUserInput(Helpers.GetArrayOfIds(stacks), DisplayStacks);
-            var stack = stacks.Where(a => a.Id == input).ToList();
+            var stack = stacks.Where(a => a.TempId == input).ToList();
             var stackname = stack.First().StackName;
-            if (input == 0)
+            var keepGoing = string.Empty;
+            while (keepGoing != "0")
             {
-                return;
+                string? frontText = GetString(150, "\nEnter front text of flashcard: ");
+                string? backText = GetString(150, "\nEnter back text of flashcard: ");
+                db.CreateCard(stackname, frontText, backText);
+                Console.Write("Add another, or 0 to go back?\n");
+                keepGoing = Console.ReadLine();
             }
-            string? frontText = GetString(150, "\nEnter front text of flashcard: ");
-            string? backText = GetString(150, "\nEnter back text of flashcard: ");
-
-            db.CreateCard(stackname, frontText, backText);
-
         }
         private string GetString(int length, string message)
         {
@@ -156,23 +193,38 @@ namespace Flashcards.Controllers
 
         private void DeleteStack()
         {
-            List<CardStack> stacks = db.GetStackList();
-            Report.DisplayAllRecords(stacks);
-            var ids = stacks.Select(a => a.TempId.ToString()).ToArray();
+            var stackName = DisplayAndChooseStack();
 
-            int input = GetUserInput(ids, DisplayStacks);
-            var stackname = stacks.Where(a => a.TempId == input).ToList();
-
-            if (input != 0)
+            if (stackName != null)
             {
-                string message = $"\nAre you SURE you want to delete stack '{stackname.First().StackName}'?" +
+                string message = $"\nAre you SURE you want to delete stack '{stackName}'?" +
                     $"\nALL cards AND study scores for this stack will also be deleted - y/n: ";
                 string answer = GetYN(message);
                 if (answer == "y")
                 {
-                    db.DeleteStack(stackname.First().StackName);
+                    db.DeleteStack(stackName);
                     Console.WriteLine("\nStack Deleted.\n");
                 }
+            }
+        }
+
+        private string DisplayAndChooseStack()
+        {
+            List<CardStack> stacks = db.GetStackList();
+            Report.DisplayAllStacks(stacks);
+            var ids = stacks.Select(a => a.TempId.ToString()).ToList();
+            ids.Add("0");
+            var idarray = ids.ToArray();
+            int input = GetUserInput(idarray, DisplayStacks);
+            var stacklist = stacks.Where(a => a.TempId == input).ToList();
+            try
+            {
+                var stackname = stacklist.First().StackName;
+                return stackname;
+            }
+            catch
+            {
+                return null;
             }
         }
 
@@ -191,6 +243,11 @@ namespace Flashcards.Controllers
         private void DisplayStacks()
         {
             Console.Write("\nEnter ID of Stack, Or 0 to go back: ");
+        }
+
+        private void DisplayCards()
+        {
+            Console.Write("\nEnter ID of Card, Or 0 to go back: ");
         }
 
 
@@ -232,7 +289,34 @@ namespace Flashcards.Controllers
 
         private void Study()
         {
-            throw new NotImplementedException();
+            Console.WriteLine("Choose stack to study...");
+            var stackName = DisplayAndChooseStack();
+            var cards = db.GetCardList();
+            var studyCards = cards.Where(a => a.StackName == stackName).ToList();
+            var randomized = Helpers.Randomize(studyCards);
+            Scores scoreCard = new();
+            scoreCard.Date = DateTime.Now;
+            scoreCard.StackName = stackName;
+            scoreCard.StackSize = studyCards.Count;
+            scoreCard.Score = 0;
+            Console.WriteLine($"\nStarting test on stack: {stackName}!\n\n");
+            foreach(var card in randomized)
+            {
+                Console.WriteLine($"Q: {card.FrontText}");
+                Console.Write($"A: ");
+                var answer = Console.ReadLine();
+                if (answer == card.BackText)
+                {
+                    Console.WriteLine("Correct!");
+                    scoreCard.Score++;
+                }
+                else
+                {
+                    Console.WriteLine($"Incorrect. The answer was {card.BackText}");
+                }
+            }
+            Console.WriteLine($"You scored {scoreCard.Score} out of {scoreCard.StackSize}.");
+            db.WriteScore(scoreCard);
         }
 
         private void ViewScores()
