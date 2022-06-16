@@ -8,6 +8,8 @@ namespace Flashcards.Controllers
     internal class DatabaseManager
     {
         string? initialConnectionString = ConfigurationManager.AppSettings.Get("initialConnectionString");
+
+        static string? staticConnectionString = ConfigurationManager.AppSettings.Get("connectionString");
         string? connectionString = ConfigurationManager.AppSettings.Get("connectionString");
 
         public bool CheckDatabase()
@@ -85,6 +87,22 @@ namespace Flashcards.Controllers
             tableCommand.ExecuteNonQuery();
         }
 
+        /// <summary>
+        /// Called by the CardStack DTO to determine the size of the stack.
+        /// </summary>
+        /// <param name="stackName">The stack name to Query</param>
+        /// <returns>Int Stacksize</returns>
+        internal static int GetStackSize(string? stackName)
+        {
+            using var connection = new SqlConnection(staticConnectionString);
+            using var tableCommand = connection.CreateCommand();
+            connection.Open();
+            tableCommand.CommandText = "SELECT COUNT(*) FROM Cards WHERE StackName = @StackName";
+            tableCommand.Parameters.AddWithValue("@StackName", stackName);
+            var stackSize = (Int32)tableCommand.ExecuteScalar();
+            return stackSize;
+        }
+
         public void CreateStack(string stackName)
         {
             using var connection = new SqlConnection(connectionString);
@@ -98,9 +116,13 @@ namespace Flashcards.Controllers
 
         public void CreateCard(string stackName, string front, string back)
         {
-            CardStack stack = QueryStack(stackName);
             using var connection = new SqlConnection(connectionString);
             using var tableCommand = connection.CreateCommand();
+            var sql = "SELECT * FROM Stacks WHERE StackName = @StackName";
+            var parameters = new { StackName = stackName };
+            var stacks = connection.Query<CardStack>(sql, parameters).ToList();
+            var stack = stacks.FirstOrDefault();
+
             connection.Open();
             tableCommand.CommandText = "INSERT INTO Cards (StackId, StackName, FrontText, BackText)" +
                                        "VALUES (@StackId, @stackName, @FrontText, @BackText)";
@@ -111,28 +133,6 @@ namespace Flashcards.Controllers
             tableCommand.ExecuteNonQuery();
         }
 
-        /// <summary>
-        /// Returns a CardStack object, with name from the Stack table of the database
-        /// Stacksize comes from the number of cards with that Stack name
-        /// </summary>
-        /// <param name="stackName">String name of stack</param>
-        /// <returns>CardStack object</returns>
-        public CardStack QueryStack(string stackName)
-        {
-            CardStack newStack = new();
-            int stackSize = 0;
-            using var connection = new SqlConnection(connectionString);
-            using var tableCommand = connection.CreateCommand();
-            connection.Open();
-            tableCommand.CommandText = "SELECT COUNT(*) FROM Cards WHERE StackName = @StackName";
-            tableCommand.Parameters.AddWithValue("@StackName", stackName);
-            stackSize = (Int32)tableCommand.ExecuteScalar();
-
-            newStack.StackName = stackName;
-            newStack.StackSize = stackSize;
-
-            return newStack;
-        }
 
         /// <summary>
         /// To reorder the StackId of cards in given stackName, removing any gaps in Id.
@@ -202,16 +202,21 @@ namespace Flashcards.Controllers
 
             stacks = connection.Query<CardStack>("SELECT * FROM Stacks ORDER BY Id").ToList();
 
+            for (var i = 0; i < stacks.Count; i++)
+            {
+                stacks[i].TempId = i + 1;
+            }
+
             return stacks;
         }
 
-        public void DeleteStack(int Id)
+        public void DeleteStack(string stackName)
         {
             using var connection = new SqlConnection(connectionString);
             using var tableCommand = connection.CreateCommand();
             connection.Open();
-            tableCommand.CommandText = "DELETE FROM Stacks WHERE Id = @Id";
-            tableCommand.Parameters.AddWithValue("@Id", Id);
+            tableCommand.CommandText = "DELETE FROM Stacks WHERE StackName = @stackName";
+            tableCommand.Parameters.AddWithValue("@StackName", stackName);
             tableCommand.ExecuteNonQuery();
             //ReIndexStacks(); 
             //TODO Reimplement Reindex as it is causing delete cascade to delete all cards

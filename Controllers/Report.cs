@@ -21,7 +21,7 @@ namespace Flashcards.Controllers
 
             foreach (CardStack stack in stacks)
             {
-                tableData.Add(new List<object> { stack.Id, stack.StackName, stack.StackSize });
+                tableData.Add(new List<object> { stack.TempId, stack.StackName, stack.StackSize });
             }
             ConsoleTableExt.ConsoleTableBuilder
                 .From(tableData)

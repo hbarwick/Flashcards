@@ -158,9 +158,11 @@ namespace Flashcards.Controllers
         {
             List<CardStack> stacks = db.GetStackList();
             Report.DisplayAllRecords(stacks);
-            int input = GetUserInput(Helpers.GetArrayOfIds(stacks), DisplayStacks);
+            var ids = stacks.Select(a => a.TempId.ToString()).ToArray();
 
-            var stackname = stacks.Where(a => a.Id == input).ToList();
+            int input = GetUserInput(ids, DisplayStacks);
+            var stackname = stacks.Where(a => a.TempId == input).ToList();
+
             if (input != 0)
             {
                 string message = $"\nAre you SURE you want to delete stack '{stackname.First().StackName}'?" +
@@ -168,7 +170,7 @@ namespace Flashcards.Controllers
                 string answer = GetYN(message);
                 if (answer == "y")
                 {
-                    db.DeleteStack(input);
+                    db.DeleteStack(stackname.First().StackName);
                     Console.WriteLine("\nStack Deleted.\n");
                 }
             }
