@@ -299,10 +299,10 @@ namespace Flashcards.Controllers
             scoreCard.StackName = stackName;
             scoreCard.StackSize = studyCards.Count;
             scoreCard.Score = 0;
-            Console.WriteLine($"\nStarting test on stack: {stackName}!\n\n");
+            Console.WriteLine($"\nStarting test on stack: {stackName}\n");
             foreach(var card in randomized)
             {
-                Console.WriteLine($"Q: {card.FrontText}");
+                Console.WriteLine($"\nQ: {card.FrontText}");
                 Console.Write($"A: ");
                 var answer = Console.ReadLine();
                 if (answer == card.BackText)
@@ -315,7 +315,7 @@ namespace Flashcards.Controllers
                     Console.WriteLine($"Incorrect. The answer was {card.BackText}");
                 }
             }
-            Console.WriteLine($"You scored {scoreCard.Score} out of {scoreCard.StackSize}.");
+            Console.WriteLine($"\nYou scored {scoreCard.Score} out of {scoreCard.StackSize}.\n");
             db.WriteScore(scoreCard);
         }
 

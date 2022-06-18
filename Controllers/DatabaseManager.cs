@@ -2,7 +2,6 @@
 using System.Configuration;
 using Flashcards.Models;
 using Dapper;
-using Dapper.Contrib;
 using Dapper.Contrib.Extensions;
 
 namespace Flashcards.Controllers
@@ -10,10 +9,14 @@ namespace Flashcards.Controllers
     internal class DatabaseManager
     {
         string? initialConnectionString = ConfigurationManager.AppSettings.Get("initialConnectionString");
-
         static string? staticConnectionString = ConfigurationManager.AppSettings.Get("connectionString");
         string? connectionString = ConfigurationManager.AppSettings.Get("connectionString");
 
+        /// <summary>
+        /// Attempts to connect with connection string with database name specified
+        /// to determine whether database exists.
+        /// </summary>
+        /// <returns>True if database exists, else false</returns>
         public bool CheckDatabase()
         {
             Console.WriteLine(connectionString);
@@ -33,6 +36,11 @@ namespace Flashcards.Controllers
             }
         }
 
+        /// <summary>
+        /// Performs select on table to determine its existance.
+        /// If not existing, calls method to create tables.
+        /// </summary>
+        /// <returns>True if tables exist, else false.</returns>
         public bool CheckTables()
         {
             using var connection = new SqlConnection(connectionString);
@@ -51,7 +59,9 @@ namespace Flashcards.Controllers
                 return false;
             }
         }
-
+        /// <summary>
+        /// Connects to localdb via connection string with db unspecifed, then creates database.
+        /// </summary>
         public void CreateDatabase()
         {
             using var initconnection = new SqlConnection(initialConnectionString);
@@ -62,6 +72,9 @@ namespace Flashcards.Controllers
             dbCommand.ExecuteNonQuery();
         }
 
+        /// <summary>
+        /// Creates Stacks, Cards & Scores tables into the Flashcards database.
+        /// </summary>
         public void CreateTables()
         {
             Console.WriteLine(connectionString);
@@ -106,6 +119,10 @@ namespace Flashcards.Controllers
             return stackSize;
         }
 
+        /// <summary>
+        /// Writes stack object to the database.
+        /// </summary>
+        /// <param name="stackName">Name of the stack to create</param>
         public void CreateStack(string stackName)
         {
             using var connection = new SqlConnection(connectionString);
@@ -116,7 +133,12 @@ namespace Flashcards.Controllers
             tableCommand.Parameters.AddWithValue("stackName", stackName);
             tableCommand.ExecuteNonQuery();
         }
-
+        /// <summary>
+        /// Writes card object to the card table of the database.
+        /// </summary>
+        /// <param name="stackName">Name of stack card is associated with</param>
+        /// <param name="front">Front text of the flashcard</param>
+        /// <param name="back">Rear text of the flashcard</param>
         public void CreateCard(string stackName, string front, string back)
         {
             using var connection = new SqlConnection(connectionString);
@@ -194,6 +216,11 @@ namespace Flashcards.Controllers
             return stacks;
         }
 
+        /// <summary>
+        /// Deletes stack from the database.
+        /// Delete cascade will delete all rows from Cards and Scores with FK of that stack.
+        /// </summary>
+        /// <param name="stackName">Name of stack to delete</param>
         public void DeleteStack(string stackName)
         {
             using var connection = new SqlConnection(connectionString);
@@ -204,6 +231,10 @@ namespace Flashcards.Controllers
             tableCommand.ExecuteNonQuery();
         }
 
+        /// <summary>
+        /// Deletes card from Cards table.
+        /// </summary>
+        /// <param name="Id">PK Id of card</param>
         public void DeleteCard(int Id)
         {
             using var connection = new SqlConnection(connectionString);
