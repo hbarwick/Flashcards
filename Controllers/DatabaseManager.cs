@@ -268,6 +268,10 @@ namespace Flashcards.Controllers
             connection.Insert(scoreCard);
         }
 
+        /// <summary>
+        /// Selects count of scores, Pivoted on results per month
+        /// </summary>
+        /// <returns>List of MonthReport objects</returns>
         internal List<MonthReport> GetMonthlyTotalsReport()
         {
             List<MonthReport> reportLines = new List<MonthReport>();
@@ -293,6 +297,10 @@ namespace Flashcards.Controllers
             return reportLines;
         }
 
+        /// <summary>
+        /// Selects average of scores across all stacks, Pivoted on results per month
+        /// </summary>
+        /// <returns>List of MonthReport objects</returns>
         internal List<MonthReport> GetMonthlyAverageReport()
         {
             List<MonthReport> reportLines = new List<MonthReport>();
@@ -328,6 +336,5 @@ namespace Flashcards.Controllers
 	            ) as Pvt").ToList();
             return reportLines;
         }
-
     }
 }

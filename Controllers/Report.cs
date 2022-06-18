@@ -1,9 +1,4 @@
 ﻿using Flashcards.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using ConsoleTableExt;
 
 namespace Flashcards.Controllers
@@ -29,6 +24,11 @@ namespace Flashcards.Controllers
                 .ExportAndWriteLine();
         }
 
+        /// <summary>
+        /// Prints out the Id, Front text and Back text of the supplied list of cards.
+        /// Formats into table using ConsoleTableExt for prettier display.
+        /// </summary>
+        /// <param name="cards">List of Card objects.</param>
         public static void DisplayCards(List<Card> cards)
         {
             var tableData = new List<List<object>>();
@@ -43,6 +43,12 @@ namespace Flashcards.Controllers
                 .ExportAndWriteLine();
         }
 
+        /// <summary>
+        /// Prints out the Stack Name, StackId, Front text and Back text of the supplied list of cards.
+        /// Used on method call to display all cards in the database.
+        /// Formats into table using ConsoleTableExt for prettier display.
+        /// </summary>
+        /// <param name="cards">List of Card objects.</param>
         public static void DisplayAllCards(List<Card> cards)
         {
             var tableData = new List<List<object>>();
@@ -57,6 +63,10 @@ namespace Flashcards.Controllers
                 .ExportAndWriteLine();
         }
 
+        /// <summary>
+        /// Prints out row for each stack, with a value split over each month of the year.
+        /// </summary>
+        /// <param name="reportLines">List of MonthReport objects corresponding to each stack name</param>
         public static void DisplayMonthReport(List<MonthReport> reportLines)
         {
             var tableData = new List<List<object>>();
@@ -76,6 +86,11 @@ namespace Flashcards.Controllers
                 .ExportAndWriteLine();
         }
 
+        /// <summary>
+        /// Prints out the data from a list of Score objects.
+        /// Calculates the percentage correct from the Score and stacksize.
+        /// </summary>
+        /// <param name="scores">List of Score objects</param>
         internal static void DisplayStackScores(List<Scores> scores)
         {
             var tableData = new List<List<object>>();

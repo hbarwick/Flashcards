@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Flashcards.Models;
+﻿using Flashcards.Models;
 
 namespace Flashcards.Controllers
 {
@@ -221,7 +216,6 @@ namespace Flashcards.Controllers
                 return 0;
             }
         }
-
 
         private void AddCard()
         {
