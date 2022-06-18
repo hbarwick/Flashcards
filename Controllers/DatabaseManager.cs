@@ -216,6 +216,19 @@ namespace Flashcards.Controllers
             return stacks;
         }
 
+
+        /// <summary>
+        /// Uses dappers Query method to return a list of Scores from the Scores table.
+        /// </summary>
+        /// <returns>List of Scores</returns>
+        public List<Scores> GetScoresList()
+        {
+            List<Scores> scores = new List<Scores>();
+            using var connection = new SqlConnection(connectionString);
+            scores = connection.Query<Scores>("SELECT * FROM Scores").ToList();
+            return scores;
+        }
+
         /// <summary>
         /// Deletes stack from the database.
         /// Delete cascade will delete all rows from Cards and Scores with FK of that stack.
@@ -254,5 +267,67 @@ namespace Flashcards.Controllers
             using var connection = new SqlConnection(connectionString);
             connection.Insert(scoreCard);
         }
+
+        internal List<MonthReport> GetMonthlyTotalsReport()
+        {
+            List<MonthReport> reportLines = new List<MonthReport>();
+            using var connection = new SqlConnection(connectionString);
+            reportLines = connection.Query<MonthReport>(@"
+            SELECT
+	            StackName,
+	            [January],[February],[March],[April],[May],[June],[July],[August],[September],[October],[November],[December]
+            FROM
+	            (
+		            SELECT
+			            Score,
+			            StackName,
+			            DateName(Month, Date) as [Month]
+		            FROM scores
+
+	            ) as Src
+            PIVOT
+	            (
+		            count(Score)
+		            FOR [Month] in ([January],[February],[March],[April],[May],[June],[July],[August],[September],[October],[November],[December])
+	            ) as Pvt").ToList();
+            return reportLines;
+        }
+
+        internal List<MonthReport> GetMonthlyAverageReport()
+        {
+            List<MonthReport> reportLines = new List<MonthReport>();
+            using var connection = new SqlConnection(connectionString);
+            reportLines = connection.Query<MonthReport>(@"
+            SELECT
+	            StackName,
+	            ISNULL([January],0) January,
+	            ISNULL([February],0) February,
+	            ISNULL([March],0) March,
+	            ISNULL([April],0) April,
+	            ISNULL([May],0) May,
+	            ISNULL([June],0) June,	
+	            ISNULL([July],0) July,
+	            ISNULL([August],0) August,
+	            ISNULL([September],0) September,
+	            ISNULL([October],0) October,
+	            ISNULL([November],0) November,
+	            ISNULL([December],0) December
+            FROM
+	            (
+		            SELECT
+			            Score,
+			            StackName,
+			            StackSize,
+			            DateName(Month, Date) as [Month]
+		            FROM scores
+	            ) as Src
+            PIVOT
+	            (
+		            AVG(Score)
+		            FOR [Month] in ([January],[February],[March],[April],[May],[June],[July],[August],[September],[October],[November],[December])
+	            ) as Pvt").ToList();
+            return reportLines;
+        }
+
     }
 }

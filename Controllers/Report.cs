@@ -57,5 +57,39 @@ namespace Flashcards.Controllers
                 .ExportAndWriteLine();
         }
 
+        public static void DisplayMonthReport(List<MonthReport> reportLines)
+        {
+            var tableData = new List<List<object>>();
+
+            foreach (MonthReport line in reportLines)
+            {
+                tableData.Add(new List<object> { line.StackName, 
+                    line.January, line.February, line.March, line.April, 
+                    line.May, line.June, line.July, line.August, line.September, 
+                    line.October, line.November, line.December });
+            }
+            ConsoleTableExt.ConsoleTableBuilder
+                .From(tableData)
+                .WithColumn("Stack Name", "Jan", "Feb", 
+                "Mar", "Apr", "May", "Jun", "Jul", "Aug", 
+                "Sep", "Oct", "Nov", "Dec")
+                .ExportAndWriteLine();
+        }
+
+        internal static void DisplayStackScores(List<Scores> scores)
+        {
+            var tableData = new List<List<object>>();
+
+            foreach (Scores score in scores)
+            {
+                float fpercent = (float)score.Score / (float)score.StackSize * 100;
+                string percent = $"{fpercent.ToString("0.00")}%";
+                tableData.Add(new List<object> { score.Date, score.Score, score.StackSize, percent});
+            }
+            ConsoleTableExt.ConsoleTableBuilder
+                .From(tableData)
+                .WithColumn("Date", "Score", "Stack Size", "Percent Correct")
+                .ExportAndWriteLine();
+        }
     }
 }

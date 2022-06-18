@@ -65,6 +65,18 @@ namespace Flashcards.Controllers
             Console.Write("\nEnter option number: ");
         }
 
+        private void ViewScoresMenu()
+        {
+            Console.WriteLine("\n---------------------------");
+            Console.WriteLine("         View Scores       ");
+            Console.WriteLine("---------------------------\n");
+            Console.WriteLine("0 - Back to Main Menu");
+            Console.WriteLine("1 - View sessions for stack");
+            Console.WriteLine("2 - View Total Sessions per month");
+            Console.WriteLine("3 - View Average Score per month");
+            Console.Write("\nEnter option number: ");
+        }
+
         private void MainMenuFunctionSelect(int intUserInput)
         {
             switch (intUserInput)
@@ -126,6 +138,57 @@ namespace Flashcards.Controllers
                     Report.DisplayAllCards(cards);
                     break;
             }
+        }
+        private void ViewScoresFunctionSelect(int intUserInput)
+        {
+            switch (intUserInput)
+            {
+                case 0:
+                    // Exit Program
+                    break;
+                case 1:
+                    ViewScoresByStack();
+                    break;
+                case 2:
+                    var totalsReport = db.GetMonthlyTotalsReport();
+                    Console.WriteLine("\nTotal number of sessions per month...\n");
+                    Report.DisplayMonthReport(totalsReport);
+                    break;
+                case 3:
+                    var averageReport = db.GetMonthlyAverageReport();
+                    Console.WriteLine("\nAverage score per month...\n");
+                    Report.DisplayMonthReport(averageReport);
+                    break;
+            }
+        }
+
+        private void ViewScoresByStack()
+        {
+            Console.WriteLine("Choose stack to view study sessions");
+            var stack = DisplayAndChooseStack();
+            var allscores = db.GetScoresList();
+            var scores = allscores.Where(x => x.StackName == stack).OrderBy(x => x.Date).ToList();
+            Console.WriteLine($"\n\nDisplaying all scores for stack '{stack}'.\n");
+            Report.DisplayStackScores(scores);
+            Console.WriteLine();
+        }
+
+        private void ManageStacks()
+        {
+            int input = GetUserInput(stackMenuChoices, ManageStacksMenu);
+            ManageStacksFunctionSelect(input);
+        }
+
+        private void ManageCards()
+        {
+            int input = GetUserInput(stackMenuChoices, ManageCardsMenu);
+            ManageCardsFunctionSelect(input);
+        }
+
+        private void ViewScores()
+        {
+            int input = GetUserInput(stackMenuChoices, ViewScoresMenu);
+            ViewScoresFunctionSelect(input);
         }
 
         private void DeleteCard()
@@ -273,20 +336,6 @@ namespace Flashcards.Controllers
                 }
             }
         }
-
-        private void ManageStacks()
-        {
-            int input = GetUserInput(stackMenuChoices, ManageStacksMenu);
-            ManageStacksFunctionSelect(input);
-        }
-
-
-        private void ManageCards()
-        {
-            int input = GetUserInput(stackMenuChoices, ManageCardsMenu);
-            ManageCardsFunctionSelect(input);
-        }
-
         private void Study()
         {
             Console.WriteLine("Choose stack to study...");
@@ -319,10 +368,7 @@ namespace Flashcards.Controllers
             db.WriteScore(scoreCard);
         }
 
-        private void ViewScores()
-        {
-            throw new NotImplementedException();
-        }
+
 
         private int GetUserInput(string[] choices, Action MenuToPrint)
         {
